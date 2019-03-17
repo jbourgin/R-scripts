@@ -21,6 +21,7 @@ library(plm)
 library(orcutt)
 library(olsrr)
 library(fBasics)
+#library(emmeans)
 
 "install.packages(c('MASS', 'akima', 'robustbase'))
 install.packages(c('cobs', 'robust', 'mgcv', 'scatterplot3d', 'quantreg', 'rrcov', 'lars', 'pwr', 'trimcluster', 'parallel', 'mc2d', 'psych', 'Rfit'))
@@ -226,4 +227,34 @@ ttestfromMeans <- function(x1, x2, sd1, sd2, n1, n2)
   t <- (x1 - x2)/sqrt(poolvar*((1/n1)+(1/n2)))
   sig <- 2*(1-(pt(abs(t),df)))
   paste("t(df = ", df, ") = ", t, ", p = ", sig, sep = "")
+}
+
+
+dCohen <- function(x1, x2, sd1, sd2)
+{
+  SDpooled = sqrt(((sd1*sd1) + (sd2*sd2))/2)
+  d = (x2 - x1)/SDpooled
+  paste("d = ", d,  sep = "")
+}
+
+#AOV is not appropriate when groups are not balanced (results for main effects of within variables won't be correct). AOV is Type I while ezANOVA is type III.
+aovModel <- function(within1, within2, between, dataframe, DV, participant)
+  {
+  aov(DV~(between*within1*within2)+Error(participant/(within1*within2))+between, data = dataframe)
+}
+
+lmeModel <- function(DV, within1, within2, participant, between, dataframe)
+{
+  lme(DV ~ between*within1*within2, random = ~1|participant/within1/within2,data = dataframe, method = "ML")
+  anova(ADHOAModel, type = "marginal")
+  Anova(ADHOAModel, type = "III")
+}
+
+inverseMatrixContrast <- function(listContrasts, numberElements)
+{
+  mat <- matrix(c(1,1,1, listContrasts), ncol = 3)
+  print(mat)
+  Linv <- solve(t(mat))
+  inverseMatrix <- Linv[,-1]
+  return(inverseMatrix)
 }
