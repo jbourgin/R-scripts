@@ -33,15 +33,19 @@ HOAvsMA <- c(-0.5,0.5,0)
 YAvsHOA <- c(0,0.5,-0.5)
 YAvsrest <- c(-0.5,-0.5,1)
 onevsrest <- c(1,-0.5,-0.5)
+onevsthree <- c(-0.5,0.5,0)
 threevs5 <- c(0,-0.5,0.5)
 EyelinkvsSmi <- c(0.5, -0.5)
 LowvsHigh <- c(-1,-1,1,1)
 Verylowvslow <- c(-1,1,0,0)
 HighvsVeryhigh <- c(0,0,-1,1)
 contrasts(data_stat$Emotion) <- cbind(EmovsNeu)
-contrasts(data_stat$Group) <- cbind(HOAvsMA, YAvsrest)
-contrasts(data_stat$Distractor) <- cbind(onevsrest, threevs5)
+#contrasts(data_stat$Group) <- cbind(HOAvsMA, YAvsrest)
+#contrasts(data_stat$Distractor) <- cbind(onevsrest, threevs5)
 contrasts(data_stat$Eyetracker) <- cbind(EyelinkvsSmi)
+
+contrasts(data_stat$Group) <- inverseMatrixContrast(c(YAvsHOA, HOAvsMA), 3)
+contrasts(data_stat$Distractor) <- inverseMatrixContrast(c(onevsthree, threevs5), 3)
 
 # Model
 # With Eyetracker
