@@ -1,33 +1,43 @@
 rm(list=ls())
-library(car)#Levene
-library(ggplot2) # graphs
-library(reshape)
-library(reshape2)
-library(WRS2) #Wilcox  tests
-library(pastecs) #stat descriptives
-library(ez)#ANOVA
-library(nlme)#Modeles multi niveaux
-library(predictmeans)#outliers pour modeles multiniveaux (cookD)
-library(cowplot)#Graphs side by side
-library(tidyr)
-library(Hmisc)
-library(rlist)
-library(Rfit)
-library(robustlmm)
-library(npIntFactRep)
-library(devtools)
-#library(WRS)
-library(plm)
-library(orcutt)
-library(olsrr)
-library(fBasics)
-#library(emmeans)
+
+usePackage <- function(i){
+  if(! i %in% installed.packages()){
+    install.packages(i, dependencies = TRUE)
+    }
+  require(i, character.only = TRUE)
+}
+
+usePackage("car")#Levene
+usePackage("ggplot2") # graphs
+usePackage("reshape")
+usePackage("reshape2")
+usePackage("WRS2") #Wilcox  tests
+usePackage("pastecs") #stat descriptives
+usePackage("ez")#ANOVA
+usePackage("nlme")#Modeles multi niveaux
+usePackage("predictmeans")#outliers pour modeles multiniveaux (cookD)
+usePackage("cowplot")#Graphs side by side
+usePackage("tidyr")
+usePackage("Hmisc")
+usePackage("rlist")
+usePackage("Rfit")
+usePackage("robustlmm")
+usePackage("npIntFactRep")
+usePackage("devtools")
+usePackage("WRS")
+usePackage("plm")
+usePackage("orcutt")
+usePackage("olsrr")
+usePackage("fBasics")
+usePackage("ggsignif")
+usePackage("compute.es")
+#usePackage("emmeans")
 
 "install.packages(c('MASS', 'akima', 'robustbase'))
 install.packages(c('cobs', 'robust', 'mgcv', 'scatterplot3d', 'quantreg', 'rrcov', 'lars', 'pwr', 'trimcluster', 'parallel', 'mc2d', 'psych', 'Rfit'))
 install.packages('WRS', repos='http://R-Forge.R-project.org', type='source')"
 #setwd('D:/Desktop')
-setwd('C:/Users/jessi/Desktop')
+setwd('/home/bourginj/Bureau')
 
 #### Shape ####
 
@@ -48,12 +58,12 @@ subset_function_keep <- function(data, VI, cat_to_keep) {
 
 #### Graphs ####
 
-# Description des données
+# Description des donn?es
 descstat <- function (data, VD, VIGroup, VI) {
   by(VD, list(VIGroup, VI), stat.desc)
 }
 
-# Thème graph
+# Th?me graph
 theme_perso <- function (base_size = 12, base_family = '') 
 {
   theme_grey(base_size = base_size, base_family = base_family) %+replace% 
@@ -78,7 +88,7 @@ theme_perso <- function (base_size = 12, base_family = '')
 # Graph line avec deux VI intra et une VI inter
 line_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange) {
   if (number_VI == 2) {
-    line<-ggplot(data, aes_string(VI_list[1],VD, colour = VI_list[2])) + facet_wrap(VIbetween) + scale_colour_manual(values = colours) + theme_perso()
+    line<-ggplot(data, aes_string(VI_list[1],VD, linetype = VI_list[2])) + facet_wrap(VIbetween) + scale_colour_manual(values = colours) + theme_perso()
     line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VI_list[2])) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
   } else if (number_VI == 1) {
     line<-ggplot(data, aes_string(VI_list[1],VD, colour = VIbetween)) + scale_colour_manual(values = colours) + theme_perso()
@@ -102,14 +112,30 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 }
 
 # Bar plot avec une VI intra et une VI inter
-bar_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange) {
+bar_graph <- function(data, VD, VI_list, number_VI, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange) {
   if (number_VI == 1) {
-    bar<-ggplot(data, aes_string(VI_list[1],VD, fill = VI_list[1])) + facet_wrap(VIbetween) + scale_fill_manual(values = colours, name = title_list[1]) + theme_perso()
-    bar + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'bar', aes_string(group=VI_list[1]), position = 'dodge') + stat_summary(fun.data = mean_cl_normal, geom = 'errorbar', position = position_dodge(width=0.90), width=0.2) + labs(x = title_list[1], y = title_list[2]) + guides(fill = FALSE)
-  }
+    bar<-ggplot(data, aes_string(VI_list[1],VD, fill = VI_list[1])) +
+      facet_wrap(VIbetween) +
+      scale_fill_manual(values = colours, name = title_list[3]) +
+      theme_perso()
+    bar +
+      coord_cartesian(ylim = yrange) +
+      stat_summary(fun.y = mean, geom = 'bar', aes_string(group=VI_list[1]), position = 'dodge') +
+      stat_summary(fun.data = mean_cl_normal, geom = 'errorbar', position = position_dodge(width=0.90), width=0.2) +
+      labs(x = title_list[1], y = title_list[2]) +
+      guides(fill = FALSE)
+    }
   else if (number_VI == 2) {
-    bar<-ggplot(data, aes_string(VI_list[1],VD, colour = VI_list[2])) + facet_wrap(VIbetween) + scale_fill_manual(values = colours, name = title_list[1]) + theme_perso()
-    bar + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'bar', aes_string(group=VI_list[2]), position = 'dodge') + stat_summary(fun.data = mean_cl_normal, geom = 'errorbar', position = position_dodge(width=0.90), width=0.2) + labs(x = title_list[1], y = title_list[2], colour = title_list[3]) + guides(fill = FALSE)
+    bar<-ggplot(data, aes_string(VI_list[1],VD, fill = VI_list[2])) +
+      facet_wrap(VIbetween) +
+      scale_fill_manual(values = colours, name = title_list[3]) +
+      theme_perso()
+    bar +
+      coord_cartesian(ylim = yrange) +
+      stat_summary(fun.y = mean, geom = 'bar', aes_string(group=VI_list[2]), position = 'dodge') +
+      stat_summary(fun.data = mean_cl_normal, geom = 'errorbar', position = position_dodge(width=0.90), width=0.2) +
+      labs(x = title_list[1], y = title_list[2], colour = title_list[3]) +
+      guides(fill = FALSE)
   }
   ggsave(filename = title_graph, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
@@ -133,12 +159,12 @@ rmMeanAdjust <- function(data, list_nb_columns, number_lines) {
 
 #### Assumptions ####
 
-# Homogénéité (variables inter)
+# Homog?n?it? (variables inter)
 homogeneity_test <- function(data, VD, VI) {
   leveneTest(VD, VI, center = 'median')
 }
 
-# Multicollinéarité. Prendre un modèle sans interaction.
+# Multicollin?arit?. Prendre un mod?le sans interaction.
 
 vif.lme <- function (fit) {
   ## adapted from rms::vif
@@ -214,10 +240,17 @@ rcontrast <- function(t,df)
   print(paste('r = ', r))
 }
 
-#pour calculer les partial eta squared, on divise SSn / (SSn + SSd)
+#pour calculer les partial eta squared, on divise SSn / (SSn + SSd). Omega squared may be best (not biased) but complicated. See sjstats (aov format required).
 partial_eta_squared <- function(SSn, SSd) {
   eta_squared <- SSn / (SSn + SSd)
-  print(paste('Eta² = ', eta_squared))
+  print(paste('Eta? = ', eta_squared))
+}
+
+omega_squared_inter <- function(SSn, SSd, dfn, dfd) {
+  MSr <- SSd/dfd
+  SSt <- SSn + SSd
+  omega_squared <- (SSn - (dfn*MSr))/(SSt+MSr)
+  print(paste('Omega? = ', omega_squared))
 }
 
 ttestfromMeans <- function(x1, x2, sd1, sd2, n1, n2)
@@ -257,4 +290,17 @@ inverseMatrixContrast <- function(listContrasts, numberElements)
   Linv <- solve(t(mat))
   inverseMatrix <- Linv[,-1]
   return(inverseMatrix)
+}
+
+#### Tables ####
+
+generateTable <- function(data, listVD, VI)
+{
+  colnames(mytable) <- c("Healthy Controls","Patients with MCI","Patients with AD")
+  for(VD in listVD) {
+    by(VD, VI, stat.desc)
+    PlusMinus(x, y)
+  }
+  
+  write.csv(MyData, file = "MyData.csv")
 }
