@@ -1,5 +1,6 @@
 rm(list=ls())
 
+#libcurl needs to be installed.
 usePackage <- function(i){
   if(! i %in% installed.packages()){
     install.packages(i, dependencies = TRUE)
@@ -19,15 +20,15 @@ usePackage("predictmeans")#outliers pour modeles multiniveaux (cookD)
 usePackage("cowplot")#Graphs side by side
 usePackage("tidyr")
 usePackage("Hmisc")
-usePackage("rlist")
+#usePackage("rlist")
 usePackage("Rfit")
-usePackage("robustlmm")
-usePackage("npIntFactRep")
-usePackage("devtools")
-usePackage("WRS")
+#usePackage("robustlmm")
+#usePackage("npIntFactRep")
+#usePackage("devtools")
+#usePackage("WRS")
 usePackage("plm")
 usePackage("orcutt")
-usePackage("olsrr")
+#usePackage("olsrr")
 usePackage("fBasics")
 usePackage("ggsignif")
 usePackage("compute.es")
