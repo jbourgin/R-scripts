@@ -9,6 +9,7 @@ usePackage <- function(i){
 }
 
 usePackage("car")#Levene
+usePackage("XLConnect")#To export output to csv
 usePackage("ggplot2") # graphs
 usePackage("reshape")
 usePackage("reshape2")
@@ -304,4 +305,26 @@ generateTable <- function(data, listVD, VI)
   }
   
   write.csv(MyData, file = "MyData.csv")
+}
+
+tabout <- function(filename, output, rowNumber)
+{
+  writeWorksheetToFile(filename, output, startRow = rowNumber, sheet="FirstSheet")
+}
+
+printANOVA <- function(filename, output)
+{
+  lenLines <- 1
+  for (s in names(output)) {
+    if (is.data.frame(output[[s]]))
+    {
+      print(output[[s]])
+      tabout(filename, output[[s]], lenLines)
+      print(length(output[[s]][,1]))
+      lenLines <- lenLines + length(output[[s]][,1])+2
+    }
+  }
+  xls <- dir(pattern = filename)
+  created <- mapply(convert, xls, gsub("xls", "csv", xls))
+  unlink(xls) # delete xlsx files
 }
