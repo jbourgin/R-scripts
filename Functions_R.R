@@ -38,7 +38,7 @@ usePackage("compute.es")
 install.packages(c('cobs', 'robust', 'mgcv', 'scatterplot3d', 'quantreg', 'rrcov', 'lars', 'pwr', 'trimcluster', 'parallel', 'mc2d', 'psych', 'Rfit'))
 install.packages('WRS', repos='http://R-Forge.R-project.org', type='source')"
 #setwd('D:/Desktop')
-setwd('/home/bourginj/Bureau')
+#setwd('/home/bourginj/Bureau')
 
 #### Shape ####
 
