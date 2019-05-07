@@ -4,6 +4,9 @@ rm(list=ls())
 #In Ubuntu, first do :
 #sudo apt-get update
 #sudo apt-get install libxml2-dev
+#To install WRS:
+#install.packages('remotes')
+#install.packages("WRS", repos="http://R-Forge.R-project.org")
 usePackage <- function(i){
   if(! i %in% installed.packages()){
     install.packages(i, dependencies = TRUE)
@@ -30,7 +33,7 @@ usePackage("Rfit")
 #usePackage("robustlmm")
 #usePackage("npIntFactRep")
 #usePackage("devtools")
-#usePackage("WRS")
+usePackage("WRS")
 usePackage("plm")
 usePackage("orcutt")
 #usePackage("olsrr")
@@ -73,13 +76,13 @@ descstat <- function (data, VD, VIGroup, VI) {
 theme_perso <- function (base_size = 12, base_family = '') 
 {
   theme_grey(base_size = base_size, base_family = base_family) %+replace% 
-    theme(axis.text.x = element_text(colour = 'black', size = 18, margin = margin(t = 0.8*11/2)), 
-          axis.text.y = element_text(colour = 'black', size = 18, margin = margin(r = 0.8*11/2)),
-          axis.title.x = element_text(colour = 'black', size = 22, margin = margin(t = 0.8*25/2)),
-          axis.title.y = element_text(colour = 'black', size = 22, angle = 90, margin = margin(r = 0.8*25/2)),
+    theme(axis.text.x = element_text(colour = 'black', size = 25, margin = margin(t = 0.8*11/2)), 
+          axis.text.y = element_text(colour = 'black', size = 25, margin = margin(r = 0.8*11/2)),
+          axis.title.x = element_text(colour = 'black', size = 30, margin = margin(t = 0.8*25/2)),
+          axis.title.y = element_text(colour = 'black', size = 30, angle = 90, margin = margin(r = 0.8*25/2)),
           axis.ticks = element_line(colour = 'black'), 
-          legend.text = element_text(size = 15),
-          legend.title = element_text(size = 22),
+          legend.text = element_text(size = 25),
+          legend.title = element_text(size = 30),
           legend.key = element_rect(colour = 'grey80'), 
           legend.key.height=unit(3,"line"),
           panel.background = element_rect(fill = 'white', colour = NA), 
@@ -87,7 +90,7 @@ theme_perso <- function (base_size = 12, base_family = '')
           panel.grid.major = element_line(colour = 'white', size = 0.2), 
           panel.grid.minor = element_line(colour = 'white', size = 0.5), 
           strip.background = element_rect(fill = 'grey90', colour = 'grey50', size = 0.2),
-          strip.text = element_text(colour = 'black', size = 22)
+          strip.text = element_text(colour = 'black', size = 30)
     )
 }
 
@@ -129,7 +132,10 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 }
 
 # Bar plot avec une VI intra et une VI inter
-bar_graph <- function(data, VD, VI_list, number_VI, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange) {
+bar_graph <- function(data, VD, VI_list, number_VI, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphType, graphPath) {
+  if (graphType == "BW") {
+    colours = c('#595959','#cccccc','#999999')
+  }
   if (number_VI == 1) {
     bar<-ggplot(data, aes_string(VI_list[1],VD, fill = VI_list[1])) +
       facet_wrap(VIbetween) +
@@ -154,7 +160,7 @@ bar_graph <- function(data, VD, VI_list, number_VI, VIbetween, title_list, title
       labs(x = title_list[1], y = title_list[2], colour = title_list[3]) +
       guides(fill = FALSE)
   }
-  ggsave(filename = title_graph, width = width_spe, height = height_spe, dpi = dpi_spe)
+  ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
 
 # Adjust means in within-subject designs
