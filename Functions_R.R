@@ -1,6 +1,9 @@
 rm(list=ls())
 
 #libcurl needs to be installed.
+#In Ubuntu, first do :
+#sudo apt-get update
+#sudo apt-get install libxml2-dev
 usePackage <- function(i){
   if(! i %in% installed.packages()){
     install.packages(i, dependencies = TRUE)
@@ -13,6 +16,7 @@ usePackage("XLConnect")#To export output to csv
 usePackage("ggplot2") # graphs
 usePackage("reshape")
 usePackage("reshape2")
+usePackage("rio") # To convert from xls to csv
 usePackage("WRS2") #Wilcox  tests
 usePackage("pastecs") #stat descriptives
 usePackage("ez")#ANOVA
@@ -21,7 +25,7 @@ usePackage("predictmeans")#outliers pour modeles multiniveaux (cookD)
 usePackage("cowplot")#Graphs side by side
 usePackage("tidyr")
 usePackage("Hmisc")
-#usePackage("rlist")
+usePackage("rlist")#To manage lists
 usePackage("Rfit")
 #usePackage("robustlmm")
 #usePackage("npIntFactRep")
@@ -88,15 +92,26 @@ theme_perso <- function (base_size = 12, base_family = '')
 }
 
 # Graph line avec deux VI intra et une VI inter
-line_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange) {
-  if (number_VI == 2) {
-    line<-ggplot(data, aes_string(VI_list[1],VD, linetype = VI_list[2])) + facet_wrap(VIbetween) + scale_colour_manual(values = colours) + theme_perso()
-    line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VI_list[2])) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
-  } else if (number_VI == 1) {
-    line<-ggplot(data, aes_string(VI_list[1],VD, colour = VIbetween)) + scale_colour_manual(values = colours) + theme_perso()
-    line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VIbetween)) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+line_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphType, graphPath) {
+  if (graphType == 'colour') {
+    if (number_VI == 2) {
+      line<-ggplot(data, aes_string(VI_list[1],VD, colour = VI_list[2])) + facet_wrap(VIbetween) + scale_colour_manual(values = colours) + theme_perso()
+      line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VI_list[2])) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+    } else if (number_VI == 1) {
+      line<-ggplot(data, aes_string(VI_list[1],VD, colour = VIbetween)) + scale_colour_manual(values = colours) + theme_perso()
+      line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VIbetween)) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+    }
+  } else
+  {
+    if (number_VI == 2) {
+      line<-ggplot(data, aes_string(VI_list[1],VD, linetype = VI_list[2])) + facet_wrap(VIbetween) + scale_colour_manual(values = colours) + theme_perso()
+      line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VI_list[2])) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+    } else if (number_VI == 1) {
+      line<-ggplot(data, aes_string(VI_list[1],VD, linetype = VIbetween)) + scale_colour_manual(values = colours) + theme_perso()
+      line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VIbetween)) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+    }
   }
-  ggsave(title_graph, width = width_spe, height = height_spe, dpi = dpi_spe)
+  ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
 
 
@@ -296,35 +311,102 @@ inverseMatrixContrast <- function(listContrasts, numberElements)
 
 #### Tables ####
 
-generateTable <- function(data, listVD, VI)
+#Variables need to be factors. Currently does not work with more than 3 variables (bad disposition)
+generateTableRes <- function(data, VD, listVI, filename, path, roundValue = 2)
+{
+  #We determine the dimensions of the output table.
+  lenTable <- 0
+  for (i in 1:length(listVI))
+  {
+    if (i < length(listVI))
+    {
+      lenTable <- lenTable + nlevels(listVI[[i]])
+    }
+  }
+  output <- data.frame(matrix(NA, nrow = lenTable, ncol = nlevels(listVI[[length(listVI)]]) + 1))
+  
+  #We create the descriptive table.
+  statDesc <- by(VD, listVI, stat.desc)
+  print(statDesc)
+  nline <- 1
+  
+  #For tables with three variables
+  for (j in 1:nlevels(listVI[[1]])) {
+    output[nline,1] <- levels(listVI[[1]])[[j]]
+    if (length(listVI) > 2) {
+      for (k in 2:(length(listVI)-1)) {
+        for (l in 1:nlevels(listVI[[k]])) {
+          nline <- nline + 1
+          output[nline,1] <- levels(listVI[[k]])[[l]]
+          for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
+            numValue <- j + ((l-1)*nlevels(listVI[[length(listVI)]])) + ((m-2)*(nlevels(listVI[[length(listVI)]])*nlevels(listVI[[k]])))
+            meanValue <- statDesc[[numValue]][[9]]
+            sdValue <- statDesc[[numValue]][[13]]
+            if (roundValue == 0) {
+              output[nline,m] <- sprintf("%.0f $\\pm$ %.0f", meanValue, sdValue)
+            } else {
+              output[nline,m] <- sprintf("%.2f $\\pm$ %.2f", meanValue, sdValue)
+            }
+          }
+        }
+      }
+      nline <- nline + 1
+      #For tables with two variables
+    } else {
+        for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
+          numValue <- j +((m-2)*nlevels(listVI[[1]]))
+          meanValue <- statDesc[[numValue]][[9]]
+          sdValue <- statDesc[[numValue]][[13]]
+          if (roundValue == 0) {
+            output[nline,m] <- sprintf("%.0f $\\pm$ %.0f", meanValue, sdValue)
+          } else {
+            output[nline,m] <- sprintf("%.2f $\\pm$ %.2f", meanValue, sdValue)
+          }
+        }
+      }
+      nline <- nline + 1
+    }
+    nline <- nline + 1
+    write.table(output, paste(path, filename, sep = ""), na = "", row.names = FALSE, col.names = FALSE, sep = ";")
+  }
+
+generateTableMethod <- function(data, VD, listVI)
 {
   colnames(mytable) <- c("Healthy Controls","Patients with MCI","Patients with AD")
   for(VD in listVD) {
-    by(VD, VI, stat.desc)
+    statDesc <- by(VD, listVI, stat.desc)
     PlusMinus(x, y)
   }
   
   write.csv(MyData, file = "MyData.csv")
 }
 
-tabout <- function(filename, output, rowNumber)
+printANOVA <- function(filename, path, output)
 {
-  writeWorksheetToFile(filename, output, startRow = rowNumber, sheet="FirstSheet")
-}
-
-printANOVA <- function(filename, output)
-{
-  lenLines <- 1
+  #lenLines <- 1
   for (s in names(output)) {
     if (is.data.frame(output[[s]]))
     {
       print(output[[s]])
-      tabout(filename, output[[s]], lenLines)
-      print(length(output[[s]][,1]))
-      lenLines <- lenLines + length(output[[s]][,1])+2
+      write.table(output[[s]], paste(path, filename, sep = ""), sep = ";", append = TRUE, na = "", row.names = FALSE)
+      #tabout(paste(path, filename, sep = ""), output[[s]], lenLines)
+      #print(length(output[[s]][,1]))
+      #lenLines <- lenLines + length(output[[s]][,1])+2
     }
   }
-  xls <- dir(pattern = filename)
-  created <- mapply(convert, xls, gsub("xls", "csv", xls))
-  unlink(xls) # delete xlsx files
+  #xlsToCsv(filename, path)
+}
+
+#### Utils ####
+
+xlsToCsv <- function(filename, pathFile) {
+  xls <- dir(path = pathFile, pattern = filename)
+  pathXls <- paste(pathFile, xls, sep = "")
+  created <- mapply(convert, pathXls, gsub("xls", "csv", pathXls))
+  unlink(pathXls) # delete xlsx files
+}
+
+tabout <- function(filename, output, rowNumber, headerValue=TRUE)
+{
+  writeWorksheetToFile(filename, output, startRow = rowNumber, header = headerValue, sheet="FirstSheet")
 }
