@@ -20,7 +20,8 @@ usePackage("ggplot2") # graphs
 usePackage("reshape")
 usePackage("reshape2")
 usePackage("rio") # To convert from xls to csv
-usePackage("WRS2") #Wilcox  tests
+usePackage("ggsignif") # To write p signif on graphs
+#usePackage("WRS2") #Wilcox  tests
 usePackage("pastecs") #stat descriptives
 usePackage("ez")#ANOVA
 usePackage("nlme")#Modeles multi niveaux
@@ -131,15 +132,28 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
   ggsave(title_graph, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
 
-# Bar plot avec une VI intra et une VI inter
-bar_graph <- function(data, VD, VI_list, number_VI, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphType, graphPath) {
+# Bar plot avec une VI intra et une VI inter. In annot_df, the first parameter (Group currently) must be changed to match the name of the facet variable.
+bar_graph <- function(data, VD, VI_list, number_VI, VIbetween, title_list, title_graph, width_spe, height_spe,
+                      dpi_spe, colours, yrange, graphType, graphPath, groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005) {
   if (graphType == "BW") {
     colours = c('#595959','#cccccc','#999999')
   }
+  annot_df <- data.frame(Group = groups,
+                         start = startx,
+                         end = endx,
+                         y = labely,
+                         label = labels)
   if (number_VI == 1) {
     bar<-ggplot(data, aes_string(VI_list[1],VD, fill = VI_list[1])) +
-      facet_wrap(VIbetween) +
       scale_fill_manual(values = colours, name = title_list[3]) +
+      geom_signif(data = annot_df,
+                  inherit.aes = FALSE,
+                  aes(xmin=start, xmax=end, annotations=label, y_position=y),
+                  tip_length = tlength,
+                  textsize = 18,
+                  manual = TRUE,
+                  vjust = 0.6) +
+      facet_wrap(VIbetween) +
       theme_perso()
     bar +
       coord_cartesian(ylim = yrange) +
