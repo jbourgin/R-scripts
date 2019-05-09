@@ -74,22 +74,22 @@ descstat <- function (data, VD, VIGroup, VI) {
 }
 
 # Th?me graph
-theme_perso <- function (base_size = 12, base_family = '') 
+theme_perso <- function (base_size = 12, base_family = '')
 {
-  theme_grey(base_size = base_size, base_family = base_family) %+replace% 
-    theme(axis.text.x = element_text(colour = 'black', size = 25, margin = margin(t = 0.8*11/2)), 
+  theme_grey(base_size = base_size, base_family = base_family) %+replace%
+    theme(axis.text.x = element_text(colour = 'black', size = 25, margin = margin(t = 0.8*11/2)),
           axis.text.y = element_text(colour = 'black', size = 25, margin = margin(r = 0.8*11/2)),
           axis.title.x = element_text(colour = 'black', size = 30, margin = margin(t = 0.8*25/2)),
           axis.title.y = element_text(colour = 'black', size = 30, angle = 90, margin = margin(r = 0.8*25/2)),
-          axis.ticks = element_line(colour = 'black'), 
+          axis.ticks = element_line(colour = 'black'),
           legend.text = element_text(size = 25),
           legend.title = element_text(size = 30),
-          legend.key = element_rect(colour = 'grey80'), 
+          legend.key = element_rect(colour = 'grey80'),
           legend.key.height=unit(3,"line"),
-          panel.background = element_rect(fill = 'white', colour = NA), 
-          panel.border = element_rect(fill = NA, colour = 'grey50'), 
-          panel.grid.major = element_line(colour = 'white', size = 0.2), 
-          panel.grid.minor = element_line(colour = 'white', size = 0.5), 
+          panel.background = element_rect(fill = 'white', colour = NA),
+          panel.border = element_rect(fill = NA, colour = 'grey50'),
+          panel.grid.major = element_line(colour = 'white', size = 0.2),
+          panel.grid.minor = element_line(colour = 'white', size = 0.5),
           strip.background = element_rect(fill = 'grey90', colour = 'grey50', size = 0.2),
           strip.text = element_text(colour = 'black', size = 30)
     )
@@ -344,12 +344,12 @@ generateTableRes <- function(data, VD, listVI, filename, path, roundValue = 2)
     }
   }
   output <- data.frame(matrix(NA, nrow = lenTable, ncol = nlevels(listVI[[length(listVI)]]) + 1))
-  
+
   #We create the descriptive table.
   statDesc <- by(VD, listVI, stat.desc)
   print(statDesc)
   nline <- 1
-  
+
   #For tables with three variables
   for (j in 1:nlevels(listVI[[1]])) {
     output[nline,1] <- levels(listVI[[1]])[[j]]
@@ -387,7 +387,7 @@ generateTableRes <- function(data, VD, listVI, filename, path, roundValue = 2)
       nline <- nline + 1
     }
     nline <- nline + 1
-    write.table(output, paste(path, filename, sep = ""), na = "", row.names = FALSE, col.names = FALSE, sep = ";")
+    write.table(output, paste(path, filename, sep = ""), na = "", row.names = FALSE, col.names = FALSE, sep = ";", quote = FALSE)
   }
 
 generateTableMethod <- function(data, VD, listVI)
@@ -397,7 +397,7 @@ generateTableMethod <- function(data, VD, listVI)
     statDesc <- by(VD, listVI, stat.desc)
     PlusMinus(x, y)
   }
-  
+
   write.csv(MyData, file = "MyData.csv")
 }
 
@@ -408,7 +408,7 @@ printANOVA <- function(filename, path, output)
     if (is.data.frame(output[[s]]))
     {
       print(output[[s]])
-      write.table(output[[s]], paste(path, filename, sep = ""), sep = ";", append = TRUE, na = "", row.names = FALSE)
+      writetoCsv(output[[s]], paste(path, filename, sep = ""), sep = ";", append = TRUE, na = "", row.names = FALSE, quote = FALSE)
       #tabout(paste(path, filename, sep = ""), output[[s]], lenLines)
       #print(length(output[[s]][,1]))
       #lenLines <- lenLines + length(output[[s]][,1])+2
