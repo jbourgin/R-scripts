@@ -15,7 +15,7 @@ usePackage <- function(i){
 }
 
 usePackage("car")#Levene
-usePackage("XLConnect")#To export output to csv
+#usePackage("XLConnect")#To export output to csv
 usePackage("ggplot2") # graphs
 usePackage("reshape")
 usePackage("reshape2")
@@ -331,74 +331,106 @@ inverseMatrixContrast <- function(listContrasts, numberElements)
 
 #### Tables ####
 
-#Variables need to be factors. Currently does not work with more than 3 variables (bad disposition)
-generateTableRes <- function(data, VD, listVI, filename, path, roundValue = 2)
+writeVD <- function(roundValue, output, nline, ncolumn, meanValue, sdValue)
 {
-  #We determine the dimensions of the output table.
+  if (roundValue == 0) {
+    output[nline,ncolumn] <- sprintf("%.0f $\\pm$ %.0f", meanValue, sdValue)
+  } else {
+    output[nline,ncolumn] <- sprintf("%.2f $\\pm$ %.2f", meanValue, sdValue)
+  }
+  return(output)
+}
+
+#We determine the dimensions of the output table.
+dimensionsTable <- function(listVI, listVD)
+{
   lenTable <- 0
-  for (i in 1:length(listVI))
+  if (length(listVI) == 1)
   {
-    if (i < length(listVI))
+    lenTable <- lenTable + length(listVD)
+  }
+  else {
+    for (i in 1:length(listVI))
     {
-      lenTable <- lenTable + nlevels(listVI[[i]])
+      if (i < length(listVI))
+      {
+        lenTable <- lenTable + nlevels(listVI[[i]])
+      }
     }
   }
+  return(lenTable)
+}
+
+addTitle <- function(output, VI)
+{
+  for (i in 1:nlevels(VI))
+  {
+    output[1,i+1] <- levels(VI)[[i]]
+  }
+  return(output)
+}
+
+#Variables need to be factors. Currently does not work with more than 3 variables (bad disposition). Currently does not work with several VIs AND VDs.
+generateTableRes <- function(data, nameVD, listVD, listVI, filename, path, roundValue = 2, title = FALSE)
+  {
+  lenTable <- dimensionsTable(listVI, listVD)
   output <- data.frame(matrix(NA, nrow = lenTable, ncol = nlevels(listVI[[length(listVI)]]) + 1))
 
   #We create the descriptive table.
-  statDesc <- by(VD, listVI, stat.desc)
-  print(statDesc)
   nline <- 1
-
-  #For tables with three variables
-  for (j in 1:nlevels(listVI[[1]])) {
-    output[nline,1] <- levels(listVI[[1]])[[j]]
-    if (length(listVI) > 2) {
-      for (k in 2:(length(listVI)-1)) {
-        for (l in 1:nlevels(listVI[[k]])) {
-          nline <- nline + 1
-          output[nline,1] <- levels(listVI[[k]])[[l]]
-          for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
-            numValue <- j + ((l-1)*nlevels(listVI[[length(listVI)]])) + ((m-2)*(nlevels(listVI[[length(listVI)]])*nlevels(listVI[[k]])))
-            meanValue <- statDesc[[numValue]][[9]]
-            sdValue <- statDesc[[numValue]][[13]]
-            if (roundValue == 0) {
-              output[nline,m] <- sprintf("%.0f $\\pm$ %.0f", meanValue, sdValue)
-            } else {
-              output[nline,m] <- sprintf("%.2f $\\pm$ %.2f", meanValue, sdValue)
-            }
-          }
-        }
-      }
-      nline <- nline + 1
-      #For tables with two variables
-    } else {
-        for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
-          numValue <- j +((m-2)*nlevels(listVI[[1]]))
-          meanValue <- statDesc[[numValue]][[9]]
-          sdValue <- statDesc[[numValue]][[13]]
-          if (roundValue == 0) {
-            output[nline,m] <- sprintf("%.0f $\\pm$ %.0f", meanValue, sdValue)
-          } else {
-            output[nline,m] <- sprintf("%.2f $\\pm$ %.2f", meanValue, sdValue)
-          }
-        }
+  if (title == TRUE) {
+    output <- addTitle(output, listVI[[length(listVI)]])
+    nline <- nline + 1
+  }
+  for (i in 1:length(listVD))
+  {
+    statDesc <- by(listVD[[i]], listVI, stat.desc)
+    print(statDesc)
+    if (length(listVI) == 1)
+    {
+      output[nline,1] <- nameVD[[i]]
+      for (j in 1:nlevels(listVI[[1]]))
+      {
+        numValue <- j
+        meanValue <- statDesc[[numValue]][[9]]
+        sdValue <- statDesc[[numValue]][[13]]
+        output <- writeVD(roundValue, output, nline, ncolumn = j+1, meanValue, sdValue)
       }
       nline <- nline + 1
     }
+    else
+    {
+      #For tables with three variables
+      for (j in 1:nlevels(listVI[[1]])) {
+        output[nline,1] <- levels(listVI[[1]])[[j]]
+        if (length(listVI) == 3) {
+          for (l in 1:nlevels(listVI[[2]])) {
+            nline <- nline + 1
+            output[nline,1] <- levels(listVI[[2]])[[l]]
+            for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
+              numValue <- j + ((l-1)*nlevels(listVI[[length(listVI)]])) + ((m-2)*(nlevels(listVI[[length(listVI)]])*nlevels(listVI[[2]])))
+              meanValue <- statDesc[[numValue]][[9]]
+              sdValue <- statDesc[[numValue]][[13]]
+              output <- writeVD(roundValue, output, nline, ncolumn = m, meanValue, sdValue)
+            }
+          }
+          nline <- nline + 1
+          #For tables with two variables
+        } else if (length(listVI) == 2) {
+          for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
+            numValue <- j +((m-2)*nlevels(listVI[[1]]))
+            meanValue <- statDesc[[numValue]][[9]]
+            sdValue <- statDesc[[numValue]][[13]]
+            output <- writeVD(roundValue, output, nline, ncolumn = m, meanValue, sdValue)
+          }
+          nline <- nline + 1
+        }
+        nline <- nline + 1
+      }
+    }
+  }
     nline <- nline + 1
     write.table(output, paste(path, filename, sep = ""), na = "", row.names = FALSE, col.names = FALSE, sep = ";", quote = FALSE)
-  }
-
-generateTableMethod <- function(data, VD, listVI)
-{
-  colnames(mytable) <- c("Healthy Controls","Patients with MCI","Patients with AD")
-  for(VD in listVD) {
-    statDesc <- by(VD, listVI, stat.desc)
-    PlusMinus(x, y)
-  }
-
-  write.csv(MyData, file = "MyData.csv")
 }
 
 printANOVA <- function(filename, path, output)
