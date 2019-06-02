@@ -51,15 +51,18 @@ install.packages('WRS', repos='http://R-Forge.R-project.org', type='source')"
 
 #### Shape ####
 
+# Melt dataframe
 melt_function <- function(data, id_names, id_measured) {
   melt(data, id = id_names, measured = id_measured)
 }
 
+# Remove category from dataframe
 subset_function_remove <- function(data, VI, cat_to_remove) {
   data2 <- subset(data, VI != cat_to_remove)
   return(data2)
 }
 
+# Keep category in dataframe and remove the rest
 subset_function_keep <- function(data, VI, cat_to_keep) {
   data2 <- subset(data, VI == cat_to_keep)
   return(data2)
@@ -68,12 +71,12 @@ subset_function_keep <- function(data, VI, cat_to_keep) {
 
 #### Graphs ####
 
-# Description des donn?es
+# Data description
 descstat <- function (data, VD, VIGroup, VI) {
   by(VD, list(VIGroup, VI), stat.desc)
 }
 
-# Th?me graph
+# Figure theme
 theme_perso <- function (base_size = 12, base_family = '')
 {
   theme_grey(base_size = base_size, base_family = base_family) %+replace%
@@ -95,7 +98,7 @@ theme_perso <- function (base_size = 12, base_family = '')
     )
 }
 
-# Graph line avec deux VI intra et une VI inter
+# Line figure in color or black and white, and with 2 or 3 independent variables
 line_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphType, graphPath) {
   if (graphType == 'colour') {
     if (number_VI == 2) {
@@ -119,8 +122,8 @@ line_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, ti
 }
 
 
-# Graph boxplot avec une VI intra et une VI inter
-box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, yrange) {
+# Line figure in color or black and white, and with 2 or 3 independent variables
+box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, yrange, graphPath) {
   if (number_VI == 1) {
     boxplot <- ggplot(data,aes_string(VIbetween,VD, colour = VI_list[1]))
     boxplot + coord_cartesian(ylim = yrange) + geom_boxplot() + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
@@ -129,10 +132,11 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
     boxplot <- ggplot(data,aes_string(VI_list[1],VD, colour = VI_list[2])) + facet_wrap(VIbetween) + theme_perso()
     boxplot + coord_cartesian(ylim = yrange) + geom_boxplot() + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
   }
-  ggsave(title_graph, width = width_spe, height = height_spe, dpi = dpi_spe)
+  ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
 
-# Bar plot avec une VI intra et une VI inter. In annot_df, the first parameter (Group currently) must be changed to match the name of the facet variable.
+# Bar figure in color or black and white, and with 2 or 3 independent variables. Implements annotations (bars showing statistical differences between conditions)
+# In annot_df, the first parameter (Group currently) must be changed to match the name of the facet variable.
 bar_graph <- function(data, VD, VI_list, number_VI, VIbetween, title_list, title_graph, width_spe, height_spe,
                       dpi_spe, colours, yrange, graphType, graphPath, groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005) {
   if (graphType == "BW") {
@@ -196,12 +200,12 @@ rmMeanAdjust <- function(data, list_nb_columns, number_lines) {
 
 #### Assumptions ####
 
-# Homog?n?it? (variables inter)
+# Homogeneity
 homogeneity_test <- function(data, VD, VI) {
   leveneTest(VD, VI, center = 'median')
 }
 
-# Multicollin?arit?. Prendre un mod?le sans interaction.
+# Multicollinearity (for models without interaction)
 
 vif.lme <- function (fit) {
   ## adapted from rms::vif
@@ -217,7 +221,7 @@ vif.lme <- function (fit) {
   names(v) <- nam
   v }
 
-#Normality
+# Normality
 norm_test <- function(data, VIGroup, VI1, VI2, VD) {
   by(VD, list(VIGroup, VI1, VI2), stat.desc, basic = FALSE, norm = TRUE)
 }
@@ -270,14 +274,15 @@ resid_analysis <- function(data, n_predictors, n_subjects, model) {
 
 #### Stats ####
 
-#Fonction pour trouver les tailles d'effet des contrastes
+# Size effects
 rcontrast <- function(t,df)
 {
   r <- sqrt(t^2/(t^2+df))
   print(paste('r = ', r))
 }
 
-#pour calculer les partial eta squared, on divise SSn / (SSn + SSd). Omega squared may be best (not biased) but complicated. See sjstats (aov format required).
+# To calculate partial eta squared, we divide SSn by (SSn + SSd).
+# Omega squared may be best (not biased) but complicated. See sjstats (aov format required).
 partial_eta_squared <- function(SSn, SSd) {
   eta_squared <- SSn / (SSn + SSd)
   print(paste('Eta? = ', eta_squared))
@@ -307,12 +312,13 @@ dCohen <- function(x1, x2, sd1, sd2)
   paste("d = ", d,  sep = "")
 }
 
-#AOV is not appropriate when groups are not balanced (results for main effects of within variables won't be correct). AOV is Type I while ezANOVA is type III.
+# AOV is not appropriate when groups are not balanced (results for main effects of within variables won't be correct). AOV is Type I while ezANOVA is type III.
 aovModel <- function(within1, within2, between, dataframe, DV, participant)
   {
   aov(DV~(between*within1*within2)+Error(participant/(within1*within2))+between, data = dataframe)
 }
 
+# lme model
 lmeModel <- function(DV, within1, within2, participant, between, dataframe)
 {
   lme(DV ~ between*within1*within2, random = ~1|participant/within1/within2,data = dataframe, method = "ML")
@@ -370,7 +376,8 @@ addTitle <- function(output, VI)
   return(output)
 }
 
-#Variables need to be factors. Currently does not work with more than 3 variables (bad disposition). Currently does not work with several VIs AND VDs.
+# Generates a table in csv file from dataframe
+# Variables need to be factors. Currently does not work with more than 3 variables (bad disposition). Currently does not work with several VIs AND VDs.
 generateTableRes <- function(data, nameVD, listVD, listVI, filename, path, roundValue = 2, title = FALSE)
   {
   lenTable <- dimensionsTable(listVI, listVD)
@@ -433,6 +440,7 @@ generateTableRes <- function(data, nameVD, listVD, listVI, filename, path, round
     write.table(output, paste(path, filename, sep = ""), na = "", row.names = FALSE, col.names = FALSE, sep = ";", quote = FALSE)
 }
 
+# Outputs ANOVA table in csv file
 printANOVA <- function(filename, path, output)
 {
   #lenLines <- 1
@@ -440,7 +448,8 @@ printANOVA <- function(filename, path, output)
     if (is.data.frame(output[[s]]))
     {
       print(output[[s]])
-      writetoCsv(output[[s]], paste(path, filename, sep = ""), sep = ";", append = TRUE, na = "", row.names = FALSE, quote = FALSE)
+      write.table(output[[s]], paste(path, filename, sep = ""), append = TRUE, na = "", row.names = FALSE, sep = ";", quote = FALSE)
+      #writetoCsv(output[[s]], paste(path, filename, sep = ""), sep = ";", append = TRUE, na = "", row.names = FALSE, quote = FALSE)
       #tabout(paste(path, filename, sep = ""), output[[s]], lenLines)
       #print(length(output[[s]][,1]))
       #lenLines <- lenLines + length(output[[s]][,1])+2
@@ -451,6 +460,7 @@ printANOVA <- function(filename, path, output)
 
 #### Utils ####
 
+# Converts xls file to csv file
 xlsToCsv <- function(filename, pathFile) {
   xls <- dir(path = pathFile, pattern = filename)
   pathXls <- paste(pathFile, xls, sep = "")
@@ -458,6 +468,7 @@ xlsToCsv <- function(filename, pathFile) {
   unlink(pathXls) # delete xlsx files
 }
 
+# Outputs dataframe to xls file
 tabout <- function(filename, output, rowNumber, headerValue=TRUE)
 {
   writeWorksheetToFile(filename, output, startRow = rowNumber, header = headerValue, sheet="FirstSheet")
