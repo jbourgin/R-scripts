@@ -1,8 +1,12 @@
 This repository provides some R functions for :
 * Data shaping
-* Figure output
-* Table output
+* Table output (importable in LaTeX)
 * Assumption checking (e.g., homogeneity, normality, residuals)
 * Statistical analysis (e.g., size effect, t-test)
+* Figure output
 
-Example folder provides a R file that implements some of these functions using the csv file "engagement.csv".
+![Screenshot](Example1.png)
+
+![Screenshot](Example2.png)
+
+Example folder provides R files that implement some of these functions using csv files "engagement.csv" and "errors.csv" (real data collected during J. Bourgin PhD).
