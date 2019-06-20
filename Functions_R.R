@@ -103,10 +103,16 @@ line_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, ti
   if (graphType == 'colour') {
     if (number_VI == 2) {
       line<-ggplot(data, aes_string(VI_list[1],VD, colour = VI_list[2])) + facet_wrap(VIbetween) + scale_colour_manual(values = colours) + theme_perso()
-      line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VI_list[2])) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+      line + coord_cartesian(ylim = yrange) +
+        stat_summary(fun.y = mean, geom = 'line', aes_string(group=VI_list[2])) +
+        stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) +
+        labs(x = title_list[1], y = title_list[2], colour = title_list[3])
     } else if (number_VI == 1) {
       line<-ggplot(data, aes_string(VI_list[1],VD, colour = VIbetween)) + scale_colour_manual(values = colours) + theme_perso()
-      line + coord_cartesian(ylim = yrange) + stat_summary(fun.y = mean, geom = 'line', aes_string(group=VIbetween)) + stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+      line + coord_cartesian(ylim = yrange) +
+        stat_summary(fun.y = mean, geom = 'line', aes_string(group=VIbetween)) +
+        stat_summary(fun.data = mean_cl_normal, geom = 'pointrange', position = position_dodge(width=0.04)) +
+        labs(x = title_list[1], y = title_list[2], colour = title_list[3])
     }
   } else
   {
@@ -139,19 +145,22 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath) {
   if (number_VI == 1) {
     scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1])) +
-      geom_point() +
       facet_wrap(VIbetween) +
       theme_perso()
       #scale_colour_manual(values = colours, name = title_list[3])
-    scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=3, colour='#6E6E6E') + labs(x = title_list[1], y = title_list[2]) + guides(shape = FALSE)
+    scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=2.5, colour='#878584') + labs(x = title_list[1], y = title_list[2]) + guides(shape = FALSE) +
+      stat_summary(fun.data=mean_cl_normal,geom="errorbar", color="black", width=0.12, size=1.5, position=position_dodge(0.2)) +
+      stat_summary(fun.y=mean, geom="point", color="black", size=3)
   }
   else if (number_VI == 2) {
     scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[2])) +
       facet_wrap(VIbetween) +
       theme_perso() +
       #scale_colour_manual(values = colours, name = title_list[3]) +
-      geom_jitter(position=position_dodge(0.3), size=3, colour='#6E6E6E')
-    scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2])
+      geom_jitter(position=position_dodge(0.6), size=2.5, colour='#878584')
+    scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2]) +
+      stat_summary(fun.data=mean_cl_normal,geom="errorbar", color="black", width=0.12, size=1.5, position=position_dodge(0.2)) +
+      stat_summary(fun.y=mean, geom="point", color="black", position=position_dodge(0.2), size=3)
   }
   ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
