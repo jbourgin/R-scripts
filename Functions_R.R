@@ -122,7 +122,7 @@ line_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, ti
 }
 
 
-# Line figure in color or black and white, and with 2 or 3 independent variables
+# Box figure in color or black and white, and with 2 or 3 independent variables
 box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, yrange, graphPath) {
   if (number_VI == 1) {
     boxplot <- ggplot(data,aes_string(VIbetween,VD, colour = VI_list[1]))
@@ -131,6 +131,27 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
   else if (number_VI == 2) {
     boxplot <- ggplot(data,aes_string(VI_list[1],VD, colour = VI_list[2])) + facet_wrap(VIbetween) + theme_perso()
     boxplot + coord_cartesian(ylim = yrange) + geom_boxplot() + labs(x = title_list[1], y = title_list[2], colour = title_list[3])
+  }
+  ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
+}
+
+# Scatterplot figure in color or black and white, and with 2 or 3 independent variables
+scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath) {
+  if (number_VI == 1) {
+    scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1])) +
+      geom_point() +
+      facet_wrap(VIbetween) +
+      theme_perso()
+      #scale_colour_manual(values = colours, name = title_list[3])
+    scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=3, colour='#6E6E6E') + labs(x = title_list[1], y = title_list[2]) + guides(shape = FALSE)
+  }
+  else if (number_VI == 2) {
+    scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[2])) +
+      facet_wrap(VIbetween) +
+      theme_perso() +
+      #scale_colour_manual(values = colours, name = title_list[3]) +
+      geom_jitter(position=position_dodge(0.3), size=3, colour='#6E6E6E')
+    scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2])
   }
   ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
