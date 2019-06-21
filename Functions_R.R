@@ -14,6 +14,7 @@ usePackage <- function(i){
   require(i, character.only = TRUE)
 }
 
+usePackage("afex")
 usePackage("car")#Levene
 #usePackage("XLConnect")#To export output to csv
 usePackage("ggplot2") # graphs
@@ -96,6 +97,15 @@ theme_perso <- function (base_size = 12, base_family = '')
           strip.background = element_rect(fill = 'grey90', colour = 'grey50', size = 0.2),
           strip.text = element_text(colour = 'black', size = 30)
     )
+}
+
+# Scatterplot with regression lines
+scatterReg <- function(data, VD, covar, VI, colours) {
+  line<-ggplot(data, aes(x=covar,y=VD))
+  line + geom_point(aes(color = VI, shape = VI)) + geom_smooth(aes(color = VI, fill = VI), method = "lm") +
+    geom_rug(aes(color = VI)) +
+    scale_color_manual(values = colours) +
+    scale_fill_manual(values = colours)
 }
 
 # Line figure in color or black and white, and with 2 or 3 independent variables
@@ -303,6 +313,34 @@ resid_analysis <- function(data, n_predictors, n_subjects, model) {
 }
 
 #### Stats ####
+
+# Linear model
+#http://r-statistics.co/Linear-Regression.html
+linearModel <- function(dataSet, VD, VI) {
+  linearMod <- lm(VD ~ VI, data=dataSet)
+  print(linearMod)
+  modelSummary <- summary(linearMod)  # capture model summary as an object
+  modelCoeffs <- modelSummary$coefficients  # model coefficients
+  beta.estimate <- modelCoeffs[VI, "Estimate"]  # get beta estimate for speed
+  std.error <- modelCoeffs[VI, "Std. Error"]  # get std.error for speed
+  t_value <- beta.estimate/std.error  # calc t statistic
+  print(paste("t value = ", t_value))
+  p_value <- 2*pt(-abs(t_value), df=nrow(dataSet)-ncol(dataSet))  # calc p Value
+  print(paste("p value = ", p_value))
+  f_statistic <- linearMod$fstatistic[1]  # fstatistic
+  print(paste("f value = ", f_statistic))
+  f <- summary(linearMod)$fstatistic  # parameters for model p-value calc
+  model_p <- pf(f[1], f[2], f[3], lower=FALSE)
+  plot(linearMod)
+  resid(linearmod)
+}
+
+# For Boostrap
+bootReg <- function(formula, data, i) {
+  d <- data[i,]
+  fit <- lm(formula, data = d)
+  return(coef(fit))
+}
 
 # Size effects
 rcontrast <- function(t,df)
