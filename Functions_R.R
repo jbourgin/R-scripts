@@ -15,6 +15,7 @@ usePackage <- function(i){
 }
 
 usePackage("afex")
+usePackage("sfsmisc") # For p values in rlm tests
 usePackage("car")#Levene
 #usePackage("XLConnect")#To export output to csv
 usePackage("ggplot2") # graphs
@@ -154,23 +155,25 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 # Scatterplot figure in color or black and white, and with 2 or 3 independent variables
 scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath) {
   if (number_VI == 1) {
-    scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1])) +
-      facet_wrap(VIbetween) +
-      theme_perso()
-      #scale_colour_manual(values = colours, name = title_list[3])
-    scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=2.5, colour='#878584') + labs(x = title_list[1], y = title_list[2]) + guides(shape = FALSE) +
-      stat_summary(fun.data=mean_cl_normal,geom="errorbar", color="black", width=0.12, size=1.5, position=position_dodge(0.2)) +
-      stat_summary(fun.y=mean, geom="point", color="black", size=3)
-  }
-  else if (number_VI == 2) {
-    scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[2])) +
+    scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1], colour = VI_list[1])) +
       facet_wrap(VIbetween) +
       theme_perso() +
-      #scale_colour_manual(values = colours, name = title_list[3]) +
-      geom_jitter(position=position_dodge(0.6), size=2.5, colour='#878584')
+      scale_colour_manual(values = colours)
+    scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=3) + labs(x = title_list[1], y = title_list[2]) +
+      guides(shape = FALSE) +
+      guides(colour = FALSE) +
+      stat_summary(fun.data=mean_cl_normal,geom="errorbar", color = "red", width=0.12, size=1.5, position=position_dodge(0.2)) +
+      stat_summary(fun.y=mean, geom="point", color = "red", size=4)
+  }
+  else if (number_VI == 2) {
+    scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[2], colour = VI_list[2])) +
+      scale_colour_manual(values = colours) +
+      facet_wrap(VIbetween) +
+      theme_perso() +
+      geom_jitter(position=position_dodge(0.6), size=3)
     scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2]) +
-      stat_summary(fun.data=mean_cl_normal,geom="errorbar", color="black", width=0.12, size=1.5, position=position_dodge(0.2)) +
-      stat_summary(fun.y=mean, geom="point", color="black", position=position_dodge(0.2), size=3)
+      stat_summary(fun.data=mean_cl_normal,geom="errorbar", width=0.12, size=1.5, position=position_dodge(0.2)) +
+      stat_summary(fun.y=mean, geom="point", position=position_dodge(0.2), size=4)
   }
   ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
