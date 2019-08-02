@@ -1,9 +1,18 @@
 rm(list=ls())
 
+#First install r. To get recent version of r:
+#sudo apt install apt-transport-https software-properties-common
+#sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E298A3A825C0D65DFD57CBB651716619E084DAB9
+#sudo add-apt-repository 'deb https://cloud.r-project.org/bin/linux/ubuntu bionic-cran35/'
+#sudo apt update
+#sudo apt install r-base
+#Si pilote propriétaire (ex: nvidia) non utilisé, Rstudio va planter. Le sélectionner dans le gestionnaire de pilotes.
 #libcurl needs to be installed.
+#sudo apt install build-essential libcurl4-gnutls-dev libxml2-dev libssl-dev
 #In Ubuntu, first do :
 #sudo apt-get update
 #sudo apt-get install libxml2-dev
+#install.packages('devtools')
 #To install WRS:
 #install.packages('remotes')
 #install.packages("WRS", repos="http://R-Forge.R-project.org")
