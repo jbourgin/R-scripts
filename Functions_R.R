@@ -24,8 +24,11 @@ usePackage <- function(i){
 }
 
 usePackage("afex")
+usePackage("latex2exp") # For Latex writing
 usePackage("sfsmisc") # For p values in rlm tests
 usePackage("car")#Levene
+#usePackage("multcomp") # For posthoc
+usePackage('DescTools') # For posthoc
 #usePackage("XLConnect")#To export output to csv
 usePackage("ggplot2") # graphs
 usePackage("reshape")
@@ -162,10 +165,23 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 }
 
 # Scatterplot figure in color or black and white, and with 2 or 3 independent variables
-scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath) {
+scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath,
+                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005) {
+  annot_df <- data.frame(Group = groups,
+                         start = startx,
+                         end = endx,
+                         y = labely,
+                         label = labels)
   if (number_VI == 1) {
     scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1], colour = VI_list[1])) +
       facet_wrap(VIbetween) +
+      geom_signif(data = annot_df,
+                  inherit.aes = FALSE,
+                  aes(xmin=start, xmax=end, annotations=label, y_position=y),
+                  tip_length = tlength,
+                  textsize = 18,
+                  manual = TRUE,
+                  vjust = 0.6) +
       theme_perso() +
       scale_colour_manual(values = colours)
     scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=3) + labs(x = title_list[1], y = title_list[2]) +
