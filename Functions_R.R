@@ -166,13 +166,39 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 
 # Scatterplot figure in color or black and white, and with 2 or 3 independent variables
 scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath,
-                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005) {
-  annot_df <- data.frame(Group = groups,
-                         start = startx,
-                         end = endx,
-                         y = labely,
-                         label = labels)
-  if (number_VI == 1) {
+                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005, noVIBetween = 0, renameLabels = 0, labelsx = c()) {
+  if (noVIBetween == 1) {
+    annot_df <- data.frame(Group = groups,
+                           start = startx,
+                           end = endx,
+                           y = labely,
+                           label = labels)
+    scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1], colour = VI_list[1])) +
+      geom_signif(data = annot_df,
+                  inherit.aes = FALSE,
+                  mapping = aes(xmin=start, xmax=end, annotations=label, y_position=y),
+                  tip_length = tlength,
+                  textsize = 18,
+                  manual = TRUE,
+                  vjust = 0.6) +
+      theme_perso() +
+      scale_colour_manual(values = colours)
+    if (renameLabels == 1) {
+      scatterplot <- scatterplot +
+      scale_x_discrete(labels=labelsx)
+    }
+    scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=3) + labs(x = title_list[1], y = title_list[2]) +
+      guides(shape = FALSE) +
+      guides(colour = FALSE) +
+      stat_summary(fun.data=mean_cl_normal,geom="errorbar", color = "red", width=0.12, size=1.5, position=position_dodge(0.2)) +
+      stat_summary(fun.y=mean, geom="point", color = "red", size=4)
+  }
+  else if (number_VI == 1) {
+    annot_df <- data.frame(Group = groups,
+      start = startx,
+      end = endx,
+      y = labely,
+      label = labels)
     scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1], colour = VI_list[1])) +
       facet_wrap(VIbetween) +
       geom_signif(data = annot_df,
