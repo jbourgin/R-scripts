@@ -368,6 +368,59 @@ resid_analysis <- function(data, n_predictors, n_subjects, model) {
 
 #### Stats ####
 
+# Function to test the differences for all levels of a VI on a VD. Generates a table and a figure.
+meanVD <- function(VD, VI, title, data_stat)
+{
+  
+  model <- aov(data_stat[[VD]] ~ data_stat[[VI]], data = data_stat)
+  print(summary(model))
+  print(TukeyHSD(model))
+  
+  #### Graphs ####
+  
+  scatter<-ggplot(data_stat, aes_string(VI,VD, shape = VI, colour = VI)) +
+    scale_colour_manual(values = c('#000000','#696969','#cccccc','#000000')) +
+    theme_perso()
+  scatter +
+    #coord_cartesian(ylim = yrange) +
+    geom_point(size=3) +
+    stat_summary(fun.data=mean_cl_normal,geom="errorbar", color = "red", width=0.12, size=1.5, position=position_dodge(0.2)) +
+    stat_summary(fun.y=mean, geom="point", color = "red", size=4) +
+    #stat_summary(fun.y = mean, geom = 'bar', aes_string(group=VI), position = 'dodge') +
+    #stat_summary(fun.data = mean_cl_normal, geom = 'errorbar', position = position_dodge(width=0.90), width=0.2) +
+    labs(x = 'VI', y = 'VD') +
+    guides(colour = FALSE) +
+    guides(shape = FALSE)
+  ggsave(paste(title, '.png'), path ='./figures', width = 11, height = 8)
+  
+  #### Tables ####
+  
+  generateTableRes(data_stat,
+                   nameVD = list(VD),
+                   listVD = list(data_stat[VD]),
+                   listVI = list(data_stat[[VI]]),
+                   filename = paste(title, '.csv'),
+                   path = './tables/',
+                   roundValue = 2,
+                   title = TRUE)
+  
+  by(data_stat[[VD]], data_stat[[VI]], stat.desc)
+  
+  #### Assumptions ####
+  
+  print(by(data_stat[[VD]], data_stat[[VI]], stat.desc, basic = FALSE, norm = TRUE))
+  #qplot(sample = data_stat[[VD]], stat = 'qq')
+  # Homogeneity
+  print(leveneTest(data_stat[[VD]], data_stat[[VI]], center = "median"))
+  
+  # Residuals
+  #modellm <- lm(VD ~ VI, data = data_stat)
+  #data_resid <- resid_creation(data_stat, modellm)
+  #data_resid <- resid_analysis(data_resid, n_predictors = 1, n_subjects = number_participants, model = modellm)
+  #plot(modellm)
+  #hist(data_resid$standardized.residuals)
+}
+
 # Linear model
 #http://r-statistics.co/Linear-Regression.html
 linearModel <- function(dataSet, VD, VI) {
