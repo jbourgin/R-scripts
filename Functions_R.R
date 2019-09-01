@@ -166,7 +166,7 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 
 # Scatterplot figure in color or black and white, and with 2 or 3 independent variables
 scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath,
-                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005, noVIBetween = 0, renameLabels = 0, labelsx = c()) {
+                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005, noVIBetween = 0, renameLabels = 0, labelsx = c(), signifData = 0) {
   if (noVIBetween == 1) {
     annot_df <- data.frame(Group = groups,
                            start = startx,
@@ -174,15 +174,18 @@ scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween,
                            y = labely,
                            label = labels)
     scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1], colour = VI_list[1])) +
+      theme_perso() +
+      scale_colour_manual(values = colours)
+    if (signifData == 1) {
+      scatterplot <- scatterplot +
       geom_signif(data = annot_df,
                   inherit.aes = FALSE,
                   mapping = aes(xmin=start, xmax=end, annotations=label, y_position=y),
                   tip_length = tlength,
                   textsize = 18,
                   manual = TRUE,
-                  vjust = 0.6) +
-      theme_perso() +
-      scale_colour_manual(values = colours)
+                  vjust = 0.6)
+    }
     if (renameLabels == 1) {
       scatterplot <- scatterplot +
       scale_x_discrete(labels=labelsx)
@@ -420,6 +423,88 @@ meanVD <- function(VD, VI, title, data_stat)
   #plot(modellm)
   #hist(data_resid$standardized.residuals)
 }
+
+
+# Function to test the differences for all levels of a VI on a VD. Generates a table and a figure.
+VDpointplot <- function(VD, VD2, title, titleVD = "VD", titleVD2 = "VD2", data_stat)
+{
+  
+  #### Graphs ####
+  pointplot <- ggplot(data_stat, aes_string(VD, VD2))  + theme_perso()
+  pointplot + 
+    geom_point() +
+    scale_shape_manual(values=c(19,17)) +
+    #scale_colour_manual(values=c('#000000','#808080')) +
+    labs(x = titleVD, y = titleVD2) +
+    #theme(axis.title.y = element_text(colour = 'black', size = 20, angle = 90, margin = margin(r = 0.8*25/2))) +
+    geom_smooth(method = 'lm', alpha = 0.1)
+  ggsave(paste(title, '.png'), path ='./figures', width = 11, height = 8)
+  
+}
+
+# Function to test the differences for all levels of a VI on a VD. Generates a table and a figure.
+meanVDScatter <- function(VD, VI, title, titleVI = "Diagnosis", titleVD = "Score", data_stat, groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), renameLabels=0, labelsx = c(), number_participants, yrange)
+{
+  
+  model <- aov(data_stat[[VD]] ~ data_stat[[VI]], data = data_stat)
+  print(summary(model))
+  print(TukeyHSD(model))
+  
+  #### Graphs ####
+  
+  scatter_graph(data = data_stat,
+                VD = VD,
+                VI_list = c(VI),
+                number_VI = 1,
+                number_lines = number_participants,
+                VIbetween = VI,
+                title_list = c(titleVI, titleVD, titleVI),
+                title_graph = paste(title, '.png'),
+                width_spe = 11,
+                height_spe = 8,
+                dpi_spe = 100,
+                colours = c('#000000','#696969','#cccccc','#000000'),
+                yrange = yrange,
+                graphPath = './figures',
+                groups = groups,
+                startx = startx,
+                endx = endx,
+                labely = labely,
+                labels = labels,
+                tlength = 0.02,
+                noVIBetween = 1,
+                renameLabels = renameLabels,
+                labelsx = labelsx)
+  
+  #### Tables ####
+  
+  generateTableRes(data_stat,
+                   nameVD = list(VD),
+                   listVD = list(data_stat[VD]),
+                   listVI = list(data_stat[[VI]]),
+                   filename = paste(title, '.csv'),
+                   path = './tables/',
+                   roundValue = 2,
+                   title = TRUE)
+  
+  by(data_stat[[VD]], data_stat[[VI]], stat.desc)
+  
+  #### Assumptions ####
+  
+  print(by(data_stat[[VD]], data_stat[[VI]], stat.desc, basic = FALSE, norm = TRUE))
+  #qplot(sample = data_stat[[VD]], stat = 'qq')
+  # Homogeneity
+  print(leveneTest(data_stat[[VD]], data_stat[[VI]], center = "median"))
+  
+  # Residuals
+  #modellm <- lm(VD ~ VI, data = data_stat)
+  #data_resid <- resid_creation(data_stat, modellm)
+  #data_resid <- resid_analysis(data_resid, n_predictors = 1, n_subjects = number_participants, model = modellm)
+  #plot(modellm)
+  #hist(data_resid$standardized.residuals)
+}
+
+
 
 # Linear model
 #http://r-statistics.co/Linear-Regression.html
