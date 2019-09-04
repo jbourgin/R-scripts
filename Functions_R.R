@@ -371,35 +371,34 @@ resid_analysis <- function(data, n_predictors, n_subjects, model) {
 
 #### Stats ####
 
-getMatrixSC <- function(data_test, first_group, second_group, testToKeep, numberColNonResult)
+getMatrixSC <- function(data_test, first_group, second_group, testToKeep, numberColNonResult, title)
 {
   data_test$Category <- factor(data_test$Category)
   data_test$char.gender <- factor(data_test$char.gender)
-  c1 <- c(1, 0, -1) # AD vs CN
+  c1 <- c(-1, 1, 0) # AD vs CN
   c2 <- c(0, 1, -1) # MCI vs CN
   mat <- cbind(c1,c2)
   contrasts(data_test$Category) <- mat
-  #print(data_test$Category)
   # Construction of plist for seed level fdr
-  pmatrix = matrix(0, 27,27)
-  Fmatrix = matrix(0, 27,27)
+  pmatrix = matrix(0, 25,25)
+  Fmatrix = matrix(0, 25,25)
   for(i in (1+numberColNonResult):(ncol(data_test))){
     categoryWithoutX <- gsub('X','',names(data_test[i]))
     nline = strtoi(strsplit(categoryWithoutX,'_')[[1]][1])
     ncolumn = strtoi(strsplit(categoryWithoutX,'_')[[1]][2])
     model <- aov(data_test[,i] ~ Category+char.age+char.gender+Tissue_IC, 
                  data = data_test, na.action=na.omit)
-    #print(summary(model))
+    print(summary(model))
     #model2 <- aov(data_test[,i] ~ data_test$Category, data = data_test, na.action=na.omit)
     sumaov <- summary.aov(model, split=list(Category=list("AD vs CN"=1, "MCI vs CN" = 2)))
-    #print(sumaov)
+    print(sumaov)
     #tukeytest <- TukeyHSD(model2)
     #print(tukeytest)
     #ptokeep <- tukeytest[[1]][testToKeep]
     ptokeep <- sumaov[[1]][[5]][testToKeep]
     ftokeep <- sumaov[[1]][[4]][testToKeep]
-    #print(paste('P to keep: ',ptokeep))
-    #print(paste('F to keep: ',ftokeep))
+    print(paste('P to keep: ',ptokeep))
+    print(paste('F to keep: ',ftokeep))
     #sum_test = unlist(summary(model))
     #pmatrix[nline, ncolumn] = sum_test["Pr(>F)1"]
     #pmatrix[ncolumn, nline] = sum_test["Pr(>F)1"]
@@ -419,46 +418,59 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   # print value below .05 FDR
   for(i in 1:nrow(pmatrix)){
     for(j in 1:ncol(pmatrix)){
-      if(pmatrix[i,j] < 0.05){
-        name_column <- 'None'
-        if (paste('X',i,'_',j,sep='') %in% colnames(data_test)){
-          name_column <- paste('X',i,'_',j,sep='')
+      name_column <- 'None'
+      if (paste('X',i,'_',j,sep='') %in% colnames(data_test)){
+        name_column <- paste('X',i,'_',j,sep='')
+      }
+      else if (paste('X',j,'_',i,sep='') %in% colnames(data_test)){
+        name_column <- paste('X',j,'_',i,sep='')
+      }
+      if (name_column != 'None'){
+        test <- by(data_test[[name_column]], data_test$Category, stat.desc)
+        if (test[[first_group]][['mean']] - test[[second_group]][['mean']] < 0){
+          Fmatrix[i,j] = - Fmatrix[i,j]
         }
-        else if (paste('X',j,'_',i,sep='') %in% colnames(data_test)){
-          name_column <- paste('X',j,'_',i,sep='')
-        }
-        if (name_column != 'None'){
-          test <- by(data_test[[name_column]], data_test$Category, stat.desc)
-          print(paste('For column ',
-                      name_column,
-                      'F value',
-                      Fmatrix[i,j],
-                      ' Difference ',
-                      names(test[first_group]),
-                      '-',
-                      names(test[second_group]),
-                      ':',
-                      test[[first_group]][['mean']] - test[[second_group]][['mean']],
-                      ' with p ',
-                      (pmatrix[i,j])))
+        if(pmatrix[i,j] < 0.05){
+            print(paste('For column ',
+                        name_column,
+                        'F value',
+                        Fmatrix[i,j],
+                        ' Difference ',
+                        names(test[first_group]),
+                        '-',
+                        names(test[second_group]),
+                        ':',
+                        test[[first_group]][['mean']] - test[[second_group]][['mean']],
+                        ' with p ',
+                        (pmatrix[i,j])))
         }
       }
     }
   }
+  print(ncol(pmatrix))
+  print(data_test$Category)
+  write.csv(Fmatrix,paste('./tables/',title,'.csv',sep=""),row.names=FALSE)
+  return(list(pmatrix,Fmatrix))
 }
 
-getMatrixAmySc<- function(data_test, VI, numberColNonResult){
-  pmatrix = matrix(0, 27,27)
+getMatrixAmySc<- function(data_test, VI, numberColNonResult, title){
+  pmatrix = matrix(0, 25,25)
+  Fmatrix = matrix(0, 25, 25)
   for(i in (1+numberColNonResult):(ncol(data_test))){
     categoryWithoutX <- gsub('X','',names(data_test[i]))
     nline = strtoi(strsplit(categoryWithoutX,'_')[[1]][1])
     ncolumn = strtoi(strsplit(categoryWithoutX,'_')[[1]][2])
-    model <- aov(data_test[,i] ~ data_test[[VI]]+data_test$char.gender+data_test$char.age+data_test$Tissue_IC, data = data_test, na.action=na.omit)
-    #print(summary(model))
+    model <- aov(data_test[,i] ~ data_test[[VI]], data = data_test, na.action=na.omit)
+    #+data_test$char.gender+data_test$char.age+data_test$Tissue_IC
+    print(summary(model))
     sum_test = unlist(summary(model))
-    #print(sum_test)
+    print(sum_test)
     pmatrix[nline, ncolumn] = sum_test["Pr(>F)1"]
     pmatrix[ncolumn, nline] = sum_test["Pr(>F)1"]
+    Fmatrix[nline, ncolumn] = sum_test["F value1"]
+    Fmatrix[ncolumn, nline] = sum_test["F value1"]
+    print(paste("P to keep : ", sum_test["Pr(>F)1"]))
+    print(paste("F to keep : ", sum_test["F value1"]))
   }
   
   # FDR adjustment
@@ -472,7 +484,7 @@ getMatrixAmySc<- function(data_test, VI, numberColNonResult){
       if (is.na(pmatrix[i,j])){
         print('We do nothing')
       }
-      else if(pmatrix[i,j] < 0.05){
+      else {
         name_column <- 'None'
         if (paste('X',i,'_',j,sep='') %in% colnames(data_test)){
           name_column <- paste('X',i,'_',j,sep='')
@@ -482,16 +494,26 @@ getMatrixAmySc<- function(data_test, VI, numberColNonResult){
         }
         if (name_column != 'None'){
           cortest <- cor.test(data_test[[VI]], data_test[[name_column]])
-          print(paste('For column ',
-                      name_column,
-                      'R value',
-                      cortest[["estimate"]],
-                      ' with p ',
-                      (pmatrix[i,j])))
+          if (cortest[['estimate']] < 0){
+            Fmatrix[i,j] = - Fmatrix[i,j]
+          }
+          if(pmatrix[i,j] < 0.05){
+            print(paste('For column ',
+                        name_column,
+                        'F value',
+                        Fmatrix[i,j],
+                        'R value',
+                        cortest[["estimate"]],
+                        ' with p ',
+                        (pmatrix[i,j])))
+          }
         }
       }
     }
   }
+  print(ncol(pmatrix))
+  write.csv(Fmatrix, paste('./tables/',title,'.csv',sep=""), row.names = FALSE)
+  return(pmatrix)
 }
 
 # Function to test the differences for all levels of a VI on a VD. Generates a table and a figure.
