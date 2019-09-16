@@ -225,7 +225,9 @@ scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween,
       facet_wrap(VIbetween) +
       theme_perso() +
       geom_jitter(position=position_dodge(0.6), size=3)
-    scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2]) +
+    scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2], colour = title_list[3]) +
+      guides(shape = FALSE) +
+      #guides(colour = FALSE) +
       stat_summary(fun.data=mean_cl_normal,geom="errorbar", width=0.12, size=1.5, position=position_dodge(0.2)) +
       stat_summary(fun.y=mean, geom="point", position=position_dodge(0.2), size=4)
   }
@@ -789,13 +791,101 @@ addTitle <- function(output, VI)
   return(output)
 }
 
+getlineCol <- function(lengthVIs, chosenVI, roundValue, numValue, statDesc, output) {
+  if (length(lengthVIs) == 1) {
+    nline = 1
+    ncolumn = chosenVI[1] + 1
+  } else if (length(lengthVIs) == 2) {
+    nline = chosenVI[1]
+    ncolumn = chosenVI[2] + 1
+  } else if (length(lengthVIs) == 3) {
+    nline = (lengthVIs[2] + 2) * (chosenVI[1] - 1) + chosenVI[2] +1
+    ncolumn = chosenVI[3] + 1
+  }
+  print(chosenVI)
+  print(nline)
+  print(ncolumn)
+  meanValue <- statDesc[[numValue]][[9]]
+  sdValue <- statDesc[[numValue]][[13]]
+  output <- writeVD(roundValue, output, nline, ncolumn, meanValue, sdValue)
+  return(output)
+}
+
+recursive.Cell <- function(statDesc, lengthVIs, coeff, chosenVI, output, roundValue) {
+  nVI = length(lengthVIs)
+  nchosenVI = length(chosenVI)
+  if (nchosenVI == nVI) {
+    ind = 1
+    for (i in nVI:1) {
+      ind = ind + coeff * (chosenVI[i] - 1)
+      if (i >= 2) {
+        coeff = coeff / lengthVIs[i-1]
+      }
+    }
+    numValue = ind
+    output <- getlineCol(lengthVIs, chosenVI, roundValue, numValue, statDesc, output)
+    return(output)
+  } else {
+    for (i in 1:lengthVIs[nchosenVI+1]) {
+      z <- chosenVI
+      z[nchosenVI + 1] = i
+      output <- recursive.Cell(statDesc, lengthVIs, coeff, z, output, roundValue)
+    }
+    return(output)
+  }
+}
+
+writeColTable <- function(listVI, output) {
+  nVI = length(listVI)
+  if (nVI == 2) {
+    for (i in 1:nlevels(listVI[[1]])) {
+      output[i,1] <- levels(listVI[[1]])[[i]]
+    }
+  } else if (nVI == 3) {
+    n_line = 1
+    for (i in 1:nlevels(listVI[[1]])) {
+      output[n_line,1] <- levels(listVI[[1]])[[i]]
+      n_line = n_line + 1
+      for (j in 1:nlevels(listVI[[2]])) {
+        output[n_line,1] <- levels(listVI[[2]])[[j]]
+        n_line = n_line + 1
+      }
+      n_line = n_line + 1 # skip white line
+    }
+  }
+  return(output)
+}
+
+generateTableResRec <- function(data, listVD, listVI, filename, roundValue = 2, title = FALSE) {
+  lenTable <- dimensionsTable(listVI, listVD)
+  output <- data.frame(matrix(NA, nrow = lenTable, ncol = nlevels(listVI[[length(listVI)]]) + 1))
+  if (title == TRUE) {
+    output <- addTitle(output, listVI[[length(listVI)]])
+    nline <- nline + 1
+  }
+  output <- writeColTable(listVI, output)
+  nVI = length(listVI)
+  x = c()
+  for(i in 1:nVI) {
+    x[i] = nlevels(listVI[[i]])
+  }
+  coeff = 1
+  for (i in 1:(nVI - 1)) {
+    coeff = coeff * x[i]
+  }
+  statDesc <- by(listVD[[1]], listVI, stat.desc)
+  print(statDesc)
+  output <- recursive.Cell(statDesc, x, coeff, c(), output, roundValue)
+  write.table(output, filename, na = "", row.names = FALSE, col.names = FALSE, sep = ";", quote = FALSE)
+}
+
 # Generates a table in csv file from dataframe
 # Variables need to be factors. Currently does not work with more than 3 variables (bad disposition). Currently does not work with several VIs AND VDs.
 generateTableRes <- function(data, nameVD, listVD, listVI, filename, path, roundValue = 2, title = FALSE)
   {
   lenTable <- dimensionsTable(listVI, listVD)
   output <- data.frame(matrix(NA, nrow = lenTable, ncol = nlevels(listVI[[length(listVI)]]) + 1))
-
+  for (i in 1:length)
   #We create the descriptive table.
   nline <- 1
   if (title == TRUE) {
@@ -820,37 +910,11 @@ generateTableRes <- function(data, nameVD, listVD, listVI, filename, path, round
     }
     else
     {
-      #For tables with three variables
-      for (j in 1:nlevels(listVI[[1]])) {
-        output[nline,1] <- levels(listVI[[1]])[[j]]
-        if (length(listVI) == 3) {
-          for (l in 1:nlevels(listVI[[2]])) {
-            nline <- nline + 1
-            output[nline,1] <- levels(listVI[[2]])[[l]]
-            for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
-              numValue <- j + ((l-1)*nlevels(listVI[[length(listVI)]])) + ((m-2)*(nlevels(listVI[[length(listVI)]])*nlevels(listVI[[2]])))
-              meanValue <- statDesc[[numValue]][[9]]
-              sdValue <- statDesc[[numValue]][[13]]
-              output <- writeVD(roundValue, output, nline, ncolumn = m, meanValue, sdValue)
-            }
-          }
-          nline <- nline + 1
-          #For tables with two variables
-        } else if (length(listVI) == 2) {
-          for (m in 2:(nlevels(listVI[[length(listVI)]]) + 1)) {
-            numValue <- j +((m-2)*nlevels(listVI[[1]]))
-            meanValue <- statDesc[[numValue]][[9]]
-            sdValue <- statDesc[[numValue]][[13]]
-            output <- writeVD(roundValue, output, nline, ncolumn = m, meanValue, sdValue)
-          }
-          nline <- nline + 1
-        }
-        nline <- nline + 1
-      }
-    }
+      print("Stop torturing yourself. Try generateTableResRec instead ! Dig yourself out of the shit !")
   }
     nline <- nline + 1
     write.table(output, paste(path, filename, sep = ""), na = "", row.names = FALSE, col.names = FALSE, sep = ";", quote = FALSE)
+  }
 }
 
 # Outputs ANOVA table in csv file
