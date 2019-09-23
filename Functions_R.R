@@ -55,6 +55,7 @@ usePackage("olsrr")
 usePackage("fBasics")
 usePackage("ggsignif")
 usePackage("compute.es")
+usePackage("psycho") # Tests Crawford bayésiens.
 #usePackage("emmeans")
 
 "install.packages(c('MASS', 'akima', 'robustbase'))
