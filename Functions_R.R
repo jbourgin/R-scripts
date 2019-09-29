@@ -24,6 +24,7 @@ usePackage <- function(i){
 }
 
 usePackage("afex")
+usePackage("WRS2")
 usePackage("latex2exp") # For Latex writing
 usePackage("sfsmisc") # For p values in rlm tests
 usePackage("car")#Levene
