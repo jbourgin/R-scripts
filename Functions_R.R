@@ -383,26 +383,26 @@ CrawfordHowell <- function(case, control){
   return(result)
 }
 
-getMatrixSC <- function(data_test, first_group, second_group, testToKeep, numberColNonResult, title)
+getMatrixSC <- function(data_test, first_group, second_group, testToKeep, numberColNonResult, title, toremove = c())
 {
   data_test$Category <- factor(data_test$Category)
   data_test$char.gender <- factor(data_test$char.gender)
-  c1 <- c(-1, 1, 0) # AD vs CN
-  c2 <- c(0, 1, -1) # MCI vs CN
-  mat <- cbind(c1,c2)
+  c1 <- c(-1, 1) # AD vs CN
+  #c2 <- c(0, 1, -1) # MCI vs CN
+  mat <- cbind(c1)
   contrasts(data_test$Category) <- mat
   # Construction of plist for seed level fdr
-  pmatrix = matrix(0, 25,25)
-  Fmatrix = matrix(0, 25,25)
+  pmatrix = matrix(0, 58,58)
+  Fmatrix = matrix(0, 58,58)
   for(i in (1+numberColNonResult):(ncol(data_test))){
     categoryWithoutX <- gsub('X','',names(data_test[i]))
     nline = strtoi(strsplit(categoryWithoutX,'_')[[1]][1])
     ncolumn = strtoi(strsplit(categoryWithoutX,'_')[[1]][2])
-    model <- aov(data_test[,i] ~ Category+char.age+char.gender+Tissue_IC, 
+    model <- aov(data_test[,i] ~ Category+char.age+char.gender+Educ+Tissue_IC, 
                  data = data_test, na.action=na.omit)
     print(summary(model))
     #model2 <- aov(data_test[,i] ~ data_test$Category, data = data_test, na.action=na.omit)
-    sumaov <- summary.aov(model, split=list(Category=list("AD vs CN"=1, "MCI vs CN" = 2)))
+    sumaov <- summary.aov(model, split=list(Category=list("AD vs CN"=1)))
     print(sumaov)
     #tukeytest <- TukeyHSD(model2)
     #print(tukeytest)
@@ -461,6 +461,10 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   }
   print(ncol(pmatrix))
   print(data_test$Category)
+  if (length(toremove) > 0){
+    Fmatrix <- Fmatrix[,-toremove]
+    Fmatrix <- Fmatrix[-toremove,]
+  }
   write.csv(Fmatrix,paste('./tables/',title,'.csv',sep=""),row.names=FALSE)
   return(list(pmatrix,Fmatrix))
 }
