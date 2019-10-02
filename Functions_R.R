@@ -394,6 +394,8 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   # Construction of plist for seed level fdr
   pmatrix = matrix(0, 58,58)
   Fmatrix = matrix(0, 58,58)
+  emptymatrixrow = matrix(0,8,56)
+  emptymatrixcol = matrix(0,64,8)
   for(i in (1+numberColNonResult):(ncol(data_test))){
     categoryWithoutX <- gsub('X','',names(data_test[i]))
     nline = strtoi(strsplit(categoryWithoutX,'_')[[1]][1])
@@ -465,6 +467,8 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
     Fmatrix <- Fmatrix[,-toremove]
     Fmatrix <- Fmatrix[-toremove,]
   }
+  Fmatrix = rbind(emptymatrixrow,Fmatrix)
+  Fmatrix = cbind(emptymatrixcol,Fmatrix)
   write.csv(Fmatrix,paste('./tables/',title,'.csv',sep=""),row.names=FALSE)
   return(list(pmatrix,Fmatrix))
 }
