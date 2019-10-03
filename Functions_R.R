@@ -387,8 +387,8 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
 {
   data_test$Category <- factor(data_test$Category)
   data_test$char.gender <- factor(data_test$char.gender)
-  c1 <- c(-1, 1) # AD vs CN
-  #c2 <- c(0, 1, -1) # MCI vs CN
+  c1 <- c(-1, 1, 0) # AD vs CN
+  c2 <- c(0, 1, -1) # MCI vs CN
   mat <- cbind(c1)
   contrasts(data_test$Category) <- mat
   # Construction of plist for seed level fdr
@@ -404,7 +404,7 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
                  data = data_test, na.action=na.omit)
     print(summary(model))
     #model2 <- aov(data_test[,i] ~ data_test$Category, data = data_test, na.action=na.omit)
-    sumaov <- summary.aov(model, split=list(Category=list("AD vs CN"=1)))
+    sumaov <- summary.aov(model, split=list(Category=list("AD vs CN"=1, "MCI vs CN"=2)))
     print(sumaov)
     #tukeytest <- TukeyHSD(model2)
     #print(tukeytest)
@@ -473,6 +473,7 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   return(list(pmatrix,Fmatrix))
 }
 
+# To adapt
 getMatrixAmySc<- function(data_test, VI, numberColNonResult, title){
   pmatrix = matrix(0, 25,25)
   Fmatrix = matrix(0, 25, 25)
