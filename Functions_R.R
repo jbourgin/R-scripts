@@ -430,6 +430,7 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   }
   
   # print value below .05 FDR
+  threshold = 99999
   for(i in 1:nrow(pmatrix)){
     for(j in 1:ncol(pmatrix)){
       name_column <- 'None'
@@ -445,6 +446,9 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
           Fmatrix[i,j] = - Fmatrix[i,j]
         }
         if(pmatrix[i,j] < 0.05){
+            if (abs(Fmatrix[i,j]) < threshold) {
+              threshold <- Fmatrix[i,j]
+            }
             print(paste('For column ',
                         name_column,
                         'F value',
@@ -470,6 +474,7 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   Fmatrix = rbind(emptymatrixrow,Fmatrix)
   Fmatrix = cbind(emptymatrixcol,Fmatrix)
   write.csv(Fmatrix,paste('./tables/',title,'.csv',sep=""),row.names=FALSE)
+  print(paste('Threshold is ', threshold))
   return(list(pmatrix,Fmatrix))
 }
 
