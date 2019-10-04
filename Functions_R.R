@@ -24,6 +24,7 @@ usePackage <- function(i){
 }
 
 usePackage("afex")
+usePackage("someMTP")
 usePackage("WRS2")
 usePackage("latex2exp") # For Latex writing
 usePackage("sfsmisc") # For p values in rlm tests
@@ -389,7 +390,7 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   data_test$char.gender <- factor(data_test$char.gender)
   c1 <- c(-1, 1, 0) # AD vs CN
   c2 <- c(0, 1, -1) # MCI vs CN
-  mat <- cbind(c1)
+  mat <- cbind(c1,c2)
   contrasts(data_test$Category) <- mat
   # Construction of plist for seed level fdr
   pmatrix = matrix(0, 58,58)
@@ -400,7 +401,7 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
     categoryWithoutX <- gsub('X','',names(data_test[i]))
     nline = strtoi(strsplit(categoryWithoutX,'_')[[1]][1])
     ncolumn = strtoi(strsplit(categoryWithoutX,'_')[[1]][2])
-    model <- aov(data_test[,i] ~ Category+char.age+char.gender+Educ+Tissue_IC, 
+    model <- aov(data_test[,i] ~ char.age+char.gender+Educ+Tissue_IC+Category, 
                  data = data_test, na.action=na.omit)
     print(summary(model))
     #model2 <- aov(data_test[,i] ~ data_test$Category, data = data_test, na.action=na.omit)
@@ -426,11 +427,11 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   
   # FDR adjustment
   for (i in 1:nrow(pmatrix)){
-    pmatrix[i,] <- p.adjust(pmatrix[i,], method = 'fdr', n = ncol(pmatrix))
+    pmatrix[i,] <- p.adjust.w(pmatrix[i,], method = 'BHfwe', n = ncol(pmatrix))
   }
   
   # print value below .05 FDR
-  threshold = 99999
+  threshold_list <- c()
   for(i in 1:nrow(pmatrix)){
     for(j in 1:ncol(pmatrix)){
       name_column <- 'None'
@@ -445,10 +446,8 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
         if (test[[first_group]][['mean']] - test[[second_group]][['mean']] < 0){
           Fmatrix[i,j] = - Fmatrix[i,j]
         }
-        if(pmatrix[i,j] < 0.05){
-            if (abs(Fmatrix[i,j]) < threshold) {
-              threshold <- Fmatrix[i,j]
-            }
+        if(pmatrix[i,j] < 0.1){
+            threshold_list <- c(threshold_list,Fmatrix[i,j])
             print(paste('For column ',
                         name_column,
                         'F value',
@@ -474,6 +473,12 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
   Fmatrix = rbind(emptymatrixrow,Fmatrix)
   Fmatrix = cbind(emptymatrixcol,Fmatrix)
   write.csv(Fmatrix,paste('./tables/',title,'.csv',sep=""),row.names=FALSE)
+  if (max(threshold_list) < 0) {
+    threshold = max(threshold_list)
+  }
+  else {
+    threshold = min(abs(threshold_list))
+  }
   print(paste('Threshold is ', threshold))
   return(list(pmatrix,Fmatrix))
 }
