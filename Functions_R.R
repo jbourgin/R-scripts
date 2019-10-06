@@ -446,7 +446,7 @@ getMatrixSC <- function(data_test, first_group, second_group, testToKeep, number
         if (test[[first_group]][['mean']] - test[[second_group]][['mean']] < 0){
           Fmatrix[i,j] = - Fmatrix[i,j]
         }
-        if(pmatrix[i,j] < 0.1){
+        if(pmatrix[i,j] < 0.05){
             threshold_list <- c(threshold_list,Fmatrix[i,j])
             print(paste('For column ',
                         name_column,
