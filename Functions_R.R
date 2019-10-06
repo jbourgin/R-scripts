@@ -384,6 +384,7 @@ CrawfordHowell <- function(case, control){
   return(result)
 }
 
+# Rajout amy/hipp a la mano pour le moment avant Category
 getMatrixSC <- function(data_test, first_group, second_group, testToKeep, numberColNonResult, title, toremove = c())
 {
   data_test$Category <- factor(data_test$Category)
@@ -491,7 +492,7 @@ getMatrixAmySc<- function(data_test, VI, numberColNonResult, title){
     categoryWithoutX <- gsub('X','',names(data_test[i]))
     nline = strtoi(strsplit(categoryWithoutX,'_')[[1]][1])
     ncolumn = strtoi(strsplit(categoryWithoutX,'_')[[1]][2])
-    model <- aov(data_test[,i] ~ data_test[[VI]], data = data_test, na.action=na.omit)
+    model <- aov(data_test[,i] ~ data_test[[VI]]+Educ+char.age+char.gender, data = data_test, na.action=na.omit)
     #+data_test$char.gender+data_test$char.age+data_test$Tissue_IC
     print(summary(model))
     sum_test = unlist(summary(model))
@@ -506,7 +507,7 @@ getMatrixAmySc<- function(data_test, VI, numberColNonResult, title){
   
   # FDR adjustment
   for (i in 1:nrow(pmatrix)){
-    pmatrix[i,] <- p.adjust(pmatrix[i,], method = 'fdr', n = ncol(pmatrix))
+    pmatrix[i,] <- p.adjust.w(pmatrix[i,], method = 'BHfwe', n = ncol(pmatrix))
   }
   
   # print value below .05 fdr threshold
@@ -528,7 +529,7 @@ getMatrixAmySc<- function(data_test, VI, numberColNonResult, title){
           if (cortest[['estimate']] < 0){
             Fmatrix[i,j] = - Fmatrix[i,j]
           }
-          if(pmatrix[i,j] < 0.05){
+          if(pmatrix[i,j] < 0.1){
             print(paste('For column ',
                         name_column,
                         'F value',
