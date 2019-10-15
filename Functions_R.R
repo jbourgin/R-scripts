@@ -907,7 +907,6 @@ generateTableRes <- function(data, nameVD, listVD, listVI, filename, path, round
   {
   lenTable <- dimensionsTable(listVI, listVD)
   output <- data.frame(matrix(NA, nrow = lenTable, ncol = nlevels(listVI[[length(listVI)]]) + 1))
-  for (i in 1:length)
   #We create the descriptive table.
   nline <- 1
   if (title == TRUE) {
