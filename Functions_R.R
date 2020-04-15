@@ -1,3 +1,9 @@
+# Done by Jessica Bourgin, University Savoie Mont Blanc
+# 4 February 2019
+# jbourgin.github.io
+
+# ---------------------------------------------------------------- --------
+
 rm(list=ls())
 
 #First install r. To get recent version of r:
