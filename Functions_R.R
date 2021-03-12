@@ -173,9 +173,9 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
   ggsave(title_graph, path = graphPath, width = width_spe, height = height_spe, dpi = dpi_spe)
 }
 
-# Scatterplot figure in color or black and white, and with 2 or 3 independent variables
+# Scatterplot figure in color or black and white, and with 2 or 3 independent variables. Check shape.
 scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath,
-                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005, noVIBetween = 0, renameLabels = 0, labelsx = c(), signifData = 0) {
+                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005, noVIBetween = 0, renameLabels = 0, labelsx = c(), signifData = 0, shapes = c()) {
   if (noVIBetween == 1) {
     annot_df <- data.frame(Group = groups,
                            start = startx,
@@ -230,12 +230,13 @@ scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween,
   }
   else if (number_VI == 2) {
     scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[2], colour = VI_list[2])) +
-      scale_colour_manual(values = colours) +
+      scale_colour_manual(name=title_list[3], values = colours) +
+      scale_shape_manual(name=title_list[3], values = shapes) +
       facet_wrap(VIbetween) +
       theme_perso() +
       geom_jitter(position=position_dodge(0.6), size=3)
     scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2], colour = title_list[3]) +
-      guides(shape = FALSE) +
+      #guides(shape = FALSE) +
       #guides(colour = FALSE) +
       stat_summary(fun.data=mean_cl_normal,geom="errorbar", width=0.12, size=1.5, position=position_dodge(0.2)) +
       stat_summary(fun.y=mean, geom="point", position=position_dodge(0.2), size=4)
