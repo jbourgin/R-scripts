@@ -121,6 +121,28 @@ theme_perso <- function (base_size = 12, base_family = '')
     )
 }
 
+# Figure theme
+theme_french <- function (base_size = 12, base_family = '')
+{
+  theme_grey(base_size = base_size, base_family = base_family) %+replace%
+    theme(axis.text.x = element_text(colour = 'black', size = 25, margin = margin(t = 0.8*11/2)),
+          axis.text.y = element_text(colour = 'black', size = 25, margin = margin(r = 0.8*11/2)),
+          axis.title.x = element_text(colour = 'black', size = 30, margin = margin(t = 0.8*25/2)),
+          axis.title.y = element_text(colour = 'black', size = 30, angle = 90, margin = margin(r = 0.8*25/2)),
+          axis.ticks = element_line(colour = 'black'),
+          legend.text = element_text(size = 25),
+          legend.title = element_text(size = 30),
+          legend.key = element_rect(colour = 'grey80'),
+          legend.key.height=unit(3,"line"),
+          panel.background = element_rect(fill = 'white', colour = NA),
+          panel.border = element_rect(fill = NA, colour = 'grey50'),
+          panel.grid.major = element_line(colour = 'white', size = 0.2),
+          panel.grid.minor = element_line(colour = 'white', size = 0.5),
+          strip.background = element_rect(fill = 'grey90', colour = 'grey50', size = 0.2),
+          strip.text = element_text(colour = 'black', size = 25, margin = margin(0.3,0,0.3,0, "cm"))# title of each panel
+    )
+}
+
 # Scatterplot with regression lines
 scatterReg <- function(data, VD, covar, VI, colours) {
   line<-ggplot(data, aes(x=covar,y=VD))
@@ -175,7 +197,7 @@ box_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, tit
 
 # Scatterplot figure in color or black and white, and with 2 or 3 independent variables. Check shape.
 scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween, title_list, title_graph, width_spe, height_spe, dpi_spe, colours, yrange, graphPath,
-                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005, noVIBetween = 0, renameLabels = 0, labelsx = c(), signifData = 0, shapes = c()) {
+                          groups = c(), startx = c(), endx = c(), labely = c(), labels = c(), tlength = 0.005, noVIBetween = 0, renameLabels = 0, labelsx = c(), signifData = 0, shapes = c(), theme=theme_perso()) {
   if (noVIBetween == 1) {
     annot_df <- data.frame(Group = groups,
                            start = startx,
@@ -183,7 +205,7 @@ scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween,
                            y = labely,
                            label = labels)
     scatterplot <- ggplot(data,aes_string(VI_list[1],VD, shape = VI_list[1], colour = VI_list[1])) +
-      theme_perso() +
+      theme +
       scale_colour_manual(values = colours)
     if (signifData == 1) {
       scatterplot <- scatterplot +
@@ -220,7 +242,7 @@ scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween,
                   textsize = 18,
                   manual = TRUE,
                   vjust = 0.6) +
-      theme_perso() +
+      theme +
       scale_colour_manual(values = colours)
     scatterplot + coord_cartesian(ylim = yrange) + geom_point(size=3) + labs(x = title_list[1], y = title_list[2]) +
       guides(shape = FALSE) +
@@ -233,7 +255,7 @@ scatter_graph <- function(data, VD, VI_list, number_VI, number_lines, VIbetween,
       scale_colour_manual(name=title_list[3], values = colours) +
       scale_shape_manual(name=title_list[3], values = shapes) +
       facet_wrap(VIbetween) +
-      theme_perso() +
+      theme +
       geom_jitter(position=position_dodge(0.6), size=3)
     scatterplot + coord_cartesian(ylim = yrange) + labs(x = title_list[1], y = title_list[2], colour = title_list[3]) +
       #guides(shape = FALSE) +
